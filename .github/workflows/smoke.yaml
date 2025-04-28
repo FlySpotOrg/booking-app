@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  regression-tests:
+  smoke-tests:
     name: Regression Suite
     uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
     with:
