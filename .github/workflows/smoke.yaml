@@ -6,7 +6,7 @@ on:
 
 jobs:
   smoke-tests:
-    name: Regression Suite
+    name: Smoke Suite
     uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
     with:
       run_branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
