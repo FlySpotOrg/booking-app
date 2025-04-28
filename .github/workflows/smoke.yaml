@@ -5,17 +5,17 @@ on:
   workflow_dispatch:
 
 jobs:
-  smoke-tests:
-    name: Smoke Suite
-    uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
-    with:
-      run_branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
-      test_scope: smoke
-    secrets:
-      ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-      WORKFLOW_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      REPO_A_PAT: ${{ secrets.REPO_A_PAT }}
+  # smoke-tests:
+  #   name: Smoke Suite
+  #   uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
+  #   with:
+  #     run_branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
+  #     test_scope: smoke
+  #   secrets:
+  #     ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+  #     ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+  #     WORKFLOW_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     REPO_A_PAT: ${{ secrets.REPO_A_PAT }}
 
   trigger-smoke:
     name: Trigger Smoke Suite in playwrightDemoProject
