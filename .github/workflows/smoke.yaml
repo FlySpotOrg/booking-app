@@ -1,0 +1,17 @@
+name: Smoke Test Run
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  regression-tests:
+    name: Regression Suite
+    uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
+    with:
+      run_branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      test_scope: 'smoke'
+    secrets:
+      ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      WORKFLOW_TOKEN: ${{ secrets.GITHUB_TOKEN }}
