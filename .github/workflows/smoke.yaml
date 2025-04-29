@@ -1,104 +1,52 @@
 name: Smoke Test Run
 
 on:
-  push:
-  workflow_dispatch:
+  workflow_dispatch:    # or `push` / `workflow_dispatch` as you need
 
 jobs:
-  trigger-smoke:
-    name: Trigger Smoke Suite in playwrightDemoProject
+  dispatch-and-wait:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Generate Dispatch ID
-        id: generate
-        run: echo "id=smoke-$(date +%s)" >> $GITHUB_OUTPUT
-
-      - name: Trigger smoke test in playwrightDemoProject repo
-        id: trigger
+      - name: Dispatch smoke suite
+        id: dispatch
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.REPO_A_PAT }}
           repository: FlySpotOrg/playwrightDemoProject
           event-type: run-smoke-tests-from-app-repo
-          client-payload: >-
+          client-payload: |
             {
-              "test_scope": "smoke",
               "run_branch": "${{ github.ref_name }}",
-              "dispatch_id": "${{ steps.generate.outputs.id }}"
+              "dispatch_id": "smoke-${{ github.run_id }}"
             }
 
-      - name: Wait for Playwright Tests to Complete
-        id: wait_for_run
-        env:
-          GH_TOKEN: ${{ secrets.REPO_A_PAT }}
+      - name: Wait for smoke run to finish
+        id: wait
+        uses: peter-evans/wait-for-workflow-run@v2
+        with:
+          # cross-repo coordinates
+          owner: FlySpotOrg
+          repo: playwrightDemoProject
+
+          # target workflow file in the other repo
+          workflow: playwright-test-run.yml
+
+          # filter down to the dispatch we just created
+          # the run’s name is “Playwright Test Runner (<dispatch_id>)”
+          check-name: Playwright Test Runner (smoke-${{ github.run_id }})
+
+          # only return when it’s complete
+          status: completed
+
+          # ensure it succeeded
+          conclusion: success
+
+          # bail after 20 minutes
+          timeout-minutes: 20
+
+      - name: Publish report link
         run: |
-          echo "Waiting for triggered workflow run to complete..."
-
-          for i in {1..40}; do
-            echo "Fetching latest repository_dispatch workflow runs..."
-
-            RAW_RESPONSE=$(gh api repos/FlySpotOrg/playwrightDemoProject/actions/runs 2>/dev/null)
-
-            if [ -z "$RAW_RESPONSE" ]; then
-              echo "⚠️ GitHub API returned empty response. Will retry in 10s..."
-              sleep 10
-              continue
-            fi
-
-            DISPATCH_ID="${{ steps.generate.outputs.id }}"
-            DISPATCH_BRANCH="${{ github.ref_name }}"
-
-            RUN_INFO=$(echo "$RAW_RESPONSE" | jq --arg id "$DISPATCH_ID" '
-              .workflow_runs
-              | map(select(.event=="repository_dispatch" and (.name | contains($id))))
-              | sort_by(.created_at)
-              | reverse
-              | .[0]
-            ')
-
-            if [ "$RUN_INFO" = "null" ] || [ -z "$RUN_INFO" ]; then
-              echo "⚠️ No matching run found yet. Waiting..."
-              sleep 10
-              continue
-            fi
-
-            RUN_ID=$(echo "$RUN_INFO" | jq -r '.id')
-            STATUS=$(echo "$RUN_INFO" | jq -r '.status')
-            CONCLUSION=$(echo "$RUN_INFO" | jq -r '.conclusion')
-
-            echo "Run ID: $RUN_ID"
-            echo "Status: $STATUS"
-            echo "Conclusion: $CONCLUSION"
-
-            if [[ "$STATUS" == "completed" ]]; then
-              echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-              if [[ "$CONCLUSION" == "success" ]]; then
-                echo "✅ Run completed successfully."
-                break
-              else
-                echo "❌ Run completed with conclusion: $CONCLUSION"
-                exit 1
-              fi
-            fi
-
-            echo "⏳ Workflow still running. Waiting 10s..."
-            sleep 10
-          done
-
-      - name: Output Report Link
-        run: |
-          echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${{ env.RUN_ID }}/" >> $GITHUB_STEP_SUMMARY      
-  
-  
-  # smoke-tests:
-  #   name: Smoke Suite
-  #   uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
-  #   with:
-  #     run_branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
-  #     test_scope: smoke
-  #   secrets:
-  #     ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-  #     ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-  #     WORKFLOW_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     REPO_A_PAT: ${{ secrets.REPO_A_PAT }}
+          RUN_ID=${{ steps.wait.outputs.run-number }}
+          echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/" \
+            >> $GITHUB_STEP_SUMMARY
