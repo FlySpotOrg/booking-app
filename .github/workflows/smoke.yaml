@@ -24,41 +24,45 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_A_PAT }}
         run: |
-          echo "Waiting for the workflow to complete..."
-          
-          # Find the latest workflow run
-          for i in {1..30}; do
-            RUN_ID=$(gh run list --repo FlySpotOrg/playwrightDemoProject --workflow "Playwright Test Runner" --branch ${{ github.ref_name }} --json databaseId --limit 1 --jq '.[0].databaseId')
+          echo "Waiting for triggered workflow run to complete..."
 
-            if [ -z "$RUN_ID" ]; then
-              echo "Workflow not started yet. Waiting..."
+          for i in {1..40}; do
+            RUN_INFO=$(gh api repos/FlySpotOrg/playwrightDemoProject/actions/runs \
+              --paginate -q '.workflow_runs[] | select(.event=="repository_dispatch" and .name=="Playwright Test Runner")' | \
+              jq 'sort_by(.created_at) | reverse | .[0]')
+
+            if [ -z "$RUN_INFO" ]; then
+              echo "Workflow run not found yet. Waiting..."
               sleep 10
               continue
             fi
 
-            STATUS=$(gh run view $RUN_ID --repo FlySpotOrg/playwrightDemoProject --json status --jq '.status')
-            CONCLUSION=$(gh run view $RUN_ID --repo FlySpotOrg/playwrightDemoProject --json conclusion --jq '.conclusion')
+            RUN_ID=$(echo "$RUN_INFO" | jq -r '.id')
+            STATUS=$(echo "$RUN_INFO" | jq -r '.status')
+            CONCLUSION=$(echo "$RUN_INFO" | jq -r '.conclusion')
 
-            echo "Status: $STATUS, Conclusion: $CONCLUSION"
+            echo "Run ID: $RUN_ID"
+            echo "Status: $STATUS"
+            echo "Conclusion: $CONCLUSION"
 
             if [[ "$STATUS" == "completed" ]]; then
+              echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
               if [[ "$CONCLUSION" == "success" ]]; then
-                echo "Workflow completed successfully!"
-                echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+                echo "Run completed successfully."
                 break
               else
-                echo "Workflow failed with conclusion: $CONCLUSION"
+                echo "Run completed with conclusion: $CONCLUSION"
                 exit 1
               fi
             fi
 
-            echo "Workflow still running. Waiting 15s..."
-            sleep 15
+            echo "Still running... Waiting 10s"
+            sleep 10
           done
 
       - name: Output Report Link
         run: |
-          echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${{ env.RUN_ID }}/" >> $GITHUB_STEP_SUMMARY         
+          echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${{ env.RUN_ID }}/" >> $GITHUB_STEP_SUMMARY      
   
   
   # smoke-tests:
