@@ -8,45 +8,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Dispatch smoke suite
-        id: dispatch
-        uses: peter-evans/repository-dispatch@v2
+      - name: Dispatch & wait for smoke suite
+        id: dispatch_and_wait
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
-          token: ${{ secrets.REPO_A_PAT }}
-          repository: FlySpotOrg/playwrightDemoProject
-          event-type: run-smoke-tests-from-app-repo
-          client-payload: |
-            {
-              "run_branch": "${{ github.ref_name }}",
-              "dispatch_id": "smoke-${{ github.run_id }}"
-            }
-
-      - name: Wait for smoke run to finish
-        id: wait
-        uses: peter-evans/wait-for-workflow-run@v2
-        with:
-          # cross-repo coordinates
           owner: FlySpotOrg
           repo: playwrightDemoProject
-
-          # target workflow file in the other repo
-          workflow: playwright-test-run.yml
-
-          # filter down to the dispatch we just created
-          # the run’s name is “Playwright Test Runner (<dispatch_id>)”
-          check-name: Playwright Test Runner (smoke-${{ github.run_id }})
-
-          # only return when it’s complete
-          status: completed
-
-          # ensure it succeeded
-          conclusion: success
-
-          # bail after 20 minutes
-          timeout-minutes: 20
+          github_token: ${{ secrets.REPO_A_PAT }}
+          workflow_file_name: playwright-test-run.yml
+          ref: ${{ github.ref_name }}
+          client_payload: >-
+            {"run_branch":"${{ github.ref_name }}","test_scope":"smoke","dispatch_id":"smoke-${{ github.run_id }}"}
+          wait_interval: 15
+          propagate_failure: true
 
       - name: Publish report link
         run: |
-          RUN_ID=${{ steps.wait.outputs.run-number }}
-          echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/" \
-            >> $GITHUB_STEP_SUMMARY
+          RUN_ID=${{ steps.dispatch_and_wait.outputs.run-number }}
+          echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/" >> $GITHUB_STEP_SUMMARY
