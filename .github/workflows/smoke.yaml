@@ -29,7 +29,15 @@ jobs:
           for i in {1..40}; do
             echo "Fetching latest repository_dispatch workflow runs..."
 
-            RUN_INFO=$(gh api repos/FlySpotOrg/playwrightDemoProject/actions/runs | jq '
+            RAW_RESPONSE=$(gh api repos/FlySpotOrg/playwrightDemoProject/actions/runs 2>/dev/null)
+
+            if [ -z "$RAW_RESPONSE" ]; then
+              echo "⚠️ GitHub API returned empty response. Will retry in 10s..."
+              sleep 10
+              continue
+            fi
+
+            RUN_INFO=$(echo "$RAW_RESPONSE" | jq '
               .workflow_runs
               | map(select(.event == "repository_dispatch" and .name == "Playwright Test Runner"))
               | sort_by(.created_at)
@@ -38,7 +46,7 @@ jobs:
             ')
 
             if [ "$RUN_INFO" = "null" ] || [ -z "$RUN_INFO" ]; then
-              echo "Workflow run not found yet. Waiting..."
+              echo "⚠️ No matching run found yet. Waiting..."
               sleep 10
               continue
             fi
@@ -54,15 +62,15 @@ jobs:
             if [[ "$STATUS" == "completed" ]]; then
               echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
               if [[ "$CONCLUSION" == "success" ]]; then
-                echo "Run completed successfully."
+                echo "✅ Run completed successfully."
                 break
               else
-                echo "Run completed with conclusion: $CONCLUSION"
+                echo "❌ Run completed with conclusion: $CONCLUSION"
                 exit 1
               fi
             fi
 
-            echo "Still running... Waiting 10s"
+            echo "⏳ Workflow still running. Waiting 10s..."
             sleep 10
           done
 
