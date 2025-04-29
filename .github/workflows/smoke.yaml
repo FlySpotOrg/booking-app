@@ -21,6 +21,8 @@ jobs:
 
       - name: Wait for Playwright Tests to Complete
         id: wait_for_run
+        env:
+          GH_TOKEN: ${{ secrets.REPO_A_PAT }}
         run: |
           echo "Waiting for the workflow to complete..."
           
