@@ -27,11 +27,17 @@ jobs:
           echo "Waiting for triggered workflow run to complete..."
 
           for i in {1..40}; do
-            RUN_INFO=$(gh api repos/FlySpotOrg/playwrightDemoProject/actions/runs \
-              --paginate -q '.workflow_runs[] | select(.event=="repository_dispatch" and .name=="Playwright Test Runner")' | \
-              jq 'sort_by(.created_at) | reverse | .[0]')
+            echo "Fetching latest repository_dispatch workflow runs..."
 
-            if [ -z "$RUN_INFO" ]; then
+            RUN_INFO=$(gh api repos/FlySpotOrg/playwrightDemoProject/actions/runs | jq '
+              .workflow_runs
+              | map(select(.event == "repository_dispatch" and .name == "Playwright Test Runner"))
+              | sort_by(.created_at)
+              | reverse
+              | .[0]
+            ')
+
+            if [ "$RUN_INFO" = "null" ] || [ -z "$RUN_INFO" ]; then
               echo "Workflow run not found yet. Waiting..."
               sleep 10
               continue
