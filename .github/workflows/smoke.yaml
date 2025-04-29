@@ -49,9 +49,9 @@ jobs:
             DISPATCH_ID="${{ steps.generate.outputs.id }}"
             DISPATCH_BRANCH="${{ github.ref_name }}"
 
-            RUN_INFO=$(echo "$RAW_RESPONSE" | jq --arg branch "$DISPATCH_BRANCH" '
+            RUN_INFO=$(echo "$RAW_RESPONSE" | jq --arg id "$DISPATCH_ID" '
               .workflow_runs
-              | map(select(.event == "repository_dispatch" and .head_branch == $branch))
+              | map(select(.event=="repository_dispatch" and (.name | contains($id))))
               | sort_by(.created_at)
               | reverse
               | .[0]
