@@ -1,10 +1,12 @@
 name: Smoke Test Run
 
 on:
-  workflow_dispatch:    # or `push` / `workflow_dispatch` as you need
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   dispatch-and-wait:
+    name: Trigger Smoke test run and get report
     runs-on: ubuntu-latest
 
     steps:
