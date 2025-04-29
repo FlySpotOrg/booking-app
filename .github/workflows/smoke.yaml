@@ -18,7 +18,7 @@ jobs:
           workflow_file_name: playwright-test-run.yml
           ref: ${{ github.ref_name }}
           client_payload: >-
-            {"run_branch":"${{ github.ref_name }}","test_scope":"smoke","dispatch_id":"smoke-${{ github.run_id }}"}
+            {"run_branch":"${{ github.ref_name }}","test_scope":"smoke"}
           wait_interval: 15
           propagate_failure: true
 
