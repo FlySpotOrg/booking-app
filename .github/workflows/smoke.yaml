@@ -46,15 +46,16 @@ jobs:
               continue
             fi
 
-          DISPATCH_ID="${{ steps.generate.outputs.id }}"
+            DISPATCH_ID="${{ steps.generate.outputs.id }}"
+            DISPATCH_BRANCH="${{ github.ref_name }}"
 
-          RUN_INFO=$(echo "$RAW_RESPONSE" | jq --arg id "$DISPATCH_ID" '
-            .workflow_runs
-            | map(select(.event == "repository_dispatch" and (.name | test($id))))
-            | sort_by(.created_at)
-            | reverse
-            | .[0]
-          ')
+            RUN_INFO=$(echo "$RAW_RESPONSE" | jq --arg branch "$DISPATCH_BRANCH" '
+              .workflow_runs
+              | map(select(.event == "repository_dispatch" and .head_branch == $branch))
+              | sort_by(.created_at)
+              | reverse
+              | .[0]
+            ')
 
             if [ "$RUN_INFO" = "null" ] || [ -z "$RUN_INFO" ]; then
               echo "⚠️ No matching run found yet. Waiting..."
