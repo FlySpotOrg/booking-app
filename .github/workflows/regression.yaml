@@ -10,13 +10,14 @@ on:
 
 jobs:
   regression-tests:
-    name: Regression Suite
-    uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
-    with:
-      run_branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
-      test_scope: regression
-    secrets:
-      ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-      WORKFLOW_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      REPO_A_PAT: ${{ secrets.REPO_A_PAT }}
+    name: Trigger Regression Suite in playwrightDemoProject
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger regression test in playwrightDemoProject repo
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.REPO_A_PAT }}  # Personal Access Token (PAT) with repo permissions
+          repository: FlySpotOrg/playwrightDemoProject
+          event-type: run-regression-tests-from-app-repo
+          client-payload: '{"test_scope": "regression", "run_branch": "${{ github.ref_name }}"}'

@@ -5,6 +5,19 @@ on:
   workflow_dispatch:
 
 jobs:
+  trigger-smoke:
+    name: Trigger Smoke Suite in playwrightDemoProject
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger smoke test in playwrightDemoProject repo
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.REPO_A_PAT }}  # Personal Access Token (PAT) with repo permissions
+          repository: FlySpotOrg/playwrightDemoProject
+          event-type: run-smoke-tests-from-app-repo
+          client-payload: '{"test_scope": "smoke", "run_branch": "${{ github.ref_name }}"}'
+
   # smoke-tests:
   #   name: Smoke Suite
   #   uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
@@ -16,16 +29,3 @@ jobs:
   #     ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
   #     WORKFLOW_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   #     REPO_A_PAT: ${{ secrets.REPO_A_PAT }}
-
-  trigger-smoke:
-    name: Trigger Smoke Suite in playwrightDemoProject
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Trigger smoke test in playwrightDemoProject repo
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.REPO_A_PAT }}  # Personal Access Token (PAT) with repo permissions
-          repository: FlySpotOrg/playwrightDemoProject
-          event-type: run-tests
-          client-payload: '{"test_scope": "smoke", "run_branch": "${{ github.ref_name }}"}'
