@@ -25,5 +25,5 @@ jobs:
 
       - name: Publish report link
         run: |
-          RUN_ID=${{ steps.dispatch_and_wait.outputs.run-number }}
+          RUN_ID=${{ steps.dispatch_and_wait.outputs.workflow_run_id }}
           echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/" >> $GITHUB_STEP_SUMMARY
