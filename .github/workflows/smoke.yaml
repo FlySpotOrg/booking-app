@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Generate Dispatch ID
+        id: generate
+        run: echo "id=smoke-$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: Trigger smoke test in playwrightDemoProject repo
         id: trigger
         uses: peter-evans/repository-dispatch@v2
@@ -17,7 +21,12 @@ jobs:
           token: ${{ secrets.REPO_A_PAT }}
           repository: FlySpotOrg/playwrightDemoProject
           event-type: run-smoke-tests-from-app-repo
-          client-payload: '{"test_scope": "smoke", "run_branch": "${{ github.ref_name }}"}'
+          client-payload: >-
+            {
+              "test_scope": "smoke",
+              "run_branch": "${{ github.ref_name }}",
+              "dispatch_id": "${{ steps.generate.outputs.id }}"
+            }
 
       - name: Wait for Playwright Tests to Complete
         id: wait_for_run
@@ -37,13 +46,15 @@ jobs:
               continue
             fi
 
-            RUN_INFO=$(echo "$RAW_RESPONSE" | jq '
-              .workflow_runs
-              | map(select(.event == "repository_dispatch" and .name == "Playwright Test Runner"))
-              | sort_by(.created_at)
-              | reverse
-              | .[0]
-            ')
+          DISPATCH_ID="${{ steps.generate.outputs.id }}"
+
+          RUN_INFO=$(echo "$RAW_RESPONSE" | jq --arg id "$DISPATCH_ID" '
+            .workflow_runs
+            | map(select(.event == "repository_dispatch" and (.name | test($id))))
+            | sort_by(.created_at)
+            | reverse
+            | .[0]
+          ')
 
             if [ "$RUN_INFO" = "null" ] || [ -z "$RUN_INFO" ]; then
               echo "⚠️ No matching run found yet. Waiting..."
