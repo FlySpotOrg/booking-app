@@ -11,13 +11,54 @@ jobs:
 
     steps:
       - name: Trigger smoke test in playwrightDemoProject repo
+        id: trigger
         uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ secrets.REPO_A_PAT }}  # Personal Access Token (PAT) with repo permissions
+          token: ${{ secrets.REPO_A_PAT }}
           repository: FlySpotOrg/playwrightDemoProject
           event-type: run-smoke-tests-from-app-repo
           client-payload: '{"test_scope": "smoke", "run_branch": "${{ github.ref_name }}"}'
 
+      - name: Wait for Playwright Tests to Complete
+        id: wait_for_run
+        run: |
+          echo "Waiting for the workflow to complete..."
+          
+          # Find the latest workflow run
+          for i in {1..30}; do
+            RUN_ID=$(gh run list --repo FlySpotOrg/playwrightDemoProject --workflow "Playwright Test Runner" --branch ${{ github.ref_name }} --json databaseId --limit 1 --jq '.[0].databaseId')
+
+            if [ -z "$RUN_ID" ]; then
+              echo "Workflow not started yet. Waiting..."
+              sleep 10
+              continue
+            fi
+
+            STATUS=$(gh run view $RUN_ID --repo FlySpotOrg/playwrightDemoProject --json status --jq '.status')
+            CONCLUSION=$(gh run view $RUN_ID --repo FlySpotOrg/playwrightDemoProject --json conclusion --jq '.conclusion')
+
+            echo "Status: $STATUS, Conclusion: $CONCLUSION"
+
+            if [[ "$STATUS" == "completed" ]]; then
+              if [[ "$CONCLUSION" == "success" ]]; then
+                echo "Workflow completed successfully!"
+                echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+                break
+              else
+                echo "Workflow failed with conclusion: $CONCLUSION"
+                exit 1
+              fi
+            fi
+
+            echo "Workflow still running. Waiting 15s..."
+            sleep 15
+          done
+
+      - name: Output Report Link
+        run: |
+          echo "### ✅ Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${{ env.RUN_ID }}/" >> $GITHUB_STEP_SUMMARY         
+  
+  
   # smoke-tests:
   #   name: Smoke Suite
   #   uses: FlySpotOrg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
