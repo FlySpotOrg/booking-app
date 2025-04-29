@@ -2,22 +2,37 @@ name: Regression Test Run
 
 on:
   pull_request:
-    types:
-        - opened
-        - reopened
-        - synchronize
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  regression-tests:
-    name: Trigger Regression Suite in playwrightDemoProject
+  dispatch-and-wait:
+    name: Trigger Regression test run and get report
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger regression test in playwrightDemoProject repo
-        uses: peter-evans/repository-dispatch@v2
+      - name: Dispatch & wait for regression suite
+        id: dispatch_and_wait
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
-          token: ${{ secrets.REPO_A_PAT }}  # Personal Access Token (PAT) with repo permissions
-          repository: FlySpotOrg/playwrightDemoProject
-          event-type: run-regression-tests-from-app-repo
-          client-payload: '{"test_scope": "regression", "run_branch": "${{ github.ref_name }}"}'
+          owner: FlySpotOrg
+          repo: playwrightDemoProject
+          github_token: ${{ secrets.REPO_A_PAT }}
+          workflow_file_name: playwright-test-run.yml
+          ref: ${{ github.event.pull_request.base.ref || github.ref_name }}
+          client_payload: >-
+            {"test_scope":"smoke"}
+          wait_interval: 15
+          propagate_failure: true
+          comment_downstream_url: ${{ github.event.pull_request.comments_url }}
+
+      - name: Publish report link
+        run: |
+          RUN_ID=${{ steps.dispatch_and_wait.outputs.workflow_id }}
+          CONCLUSION=${{ steps.dispatch_and_wait.outputs.conclusion }}
+          if [ "$CONCLUSION" = "success" ]; then
+            SYMBOL="✅"
+          else
+            SYMBOL="❌"
+          fi
+          echo "### ${SYMBOL} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/" >> $GITHUB_STEP_SUMMARY
