@@ -10,6 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Pause for 30 seconds if another run is in progress
+        if: github.event_name == 'push'
+        run: |
+          RUNNING_WORKFLOWS=$(gh api repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.status=="in_progress" and .name=="${{ github.workflow }}") | .id')
+          if [ -n "$RUNNING_WORKFLOWS" ]; then
+            echo "Another run is in progress. Waiting 30 seconds..."
+            sleep 30
+          fi
+
       - name: Dispatch & wait for smoke suite
         id: dispatch_and_wait
         uses: convictional/trigger-workflow-and-wait@v1.6.5
