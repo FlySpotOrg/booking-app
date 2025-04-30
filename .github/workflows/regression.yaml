@@ -33,7 +33,7 @@ jobs:
           repo: playwrightDemoProject
           github_token: ${{ secrets.REPO_A_PAT }}
           workflow_file_name: playwright-test-run.yml
-          ref: main
+          ref: ${{ github.event.pull_request.base.ref || 'main' }}
           client_payload: >-
             {"test_scope":"regression"}
           wait_interval: 15
