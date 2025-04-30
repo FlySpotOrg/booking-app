@@ -60,13 +60,15 @@ jobs:
               -d @comment.json
           fi
 
+          # Send to Slack
           SLACK_MESSAGE="{
+            \"channel\": \"${{ secrets.SLACK_CHANNEL_ID }}\",
             \"blocks\": [
               {
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"*Smoke Test Results*\n${SYMBOL} *Status:* ${CONCLUSION}\n*Branch:* ${{ github.ref_name }}\n*Report:* ${REPORT_URL}\"
+                  \"text\": \"*Smoke Test Results*\n${SYMBOL} *Status:* ${CONCLUSION}\n*Branch:* ${{ github.ref_name }}\n*Report:* https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/\" 
                 }
               }
             ]
@@ -75,4 +77,4 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
             -d "$SLACK_MESSAGE" \
-            "https://slack.com/api/chat.postMessage?channel=${{ secrets.SLACK_CHANNEL_ID }}"
+            "https://slack.com/api/chat.postMessage"
