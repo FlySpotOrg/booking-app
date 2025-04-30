@@ -16,10 +16,13 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_A_PAT }}
         run: |
           gh auth status
-          RUNNING_WORKFLOWS=$(gh api repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.status=="in_progress" and .name=="${{ github.workflow }}") | .id')
+          CURRENT_RUN_ID=${{ github.run_id }}
+          RUNNING_WORKFLOWS=$(gh api repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.status=="in_progress" and .name=="${{ github.workflow }}" and .id!='$CURRENT_RUN_ID') | .id')
           if [ -n "$RUNNING_WORKFLOWS" ]; then
             echo "Another run is in progress. Waiting 30 seconds..."
             sleep 30
+          else
+            echo "No other runs in progress. Proceeding..."
           fi
 
       - name: Dispatch & wait for regression suite
