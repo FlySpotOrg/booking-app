@@ -39,26 +39,24 @@ jobs:
           wait_interval: 15
           propagate_failure: true
 
-      - name: Publish report link to action summary
+      - name: Publish report link to action summary and PR
         id: report_summary
         run: |
           RUN_ID=${{ steps.dispatch_and_wait.outputs.workflow_id }}
           CONCLUSION=${{ steps.dispatch_and_wait.outputs.conclusion }}
+          
           if [ "$CONCLUSION" = "success" ]; then
             SYMBOL="✅"
           else
             SYMBOL="❌"
           fi
           echo "### ${SYMBOL} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/regression/${RUN_ID}/" >> $GITHUB_STEP_SUMMARY
-          echo "symbol=${SYMBOL}" >> $GITHUB_OUTPUT
-          echo "run_id=${RUN_ID}" >> $GITHUB_OUTPUT
-
-      - name: Publish report link to PR
-        if: github.event.pull_request.comments_url
-        run: |
-          echo "{\"body\":\"### ${{ steps.report_summary.outputs.symbol }} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/regression/${{ steps.report_summary.outputs.run_id }}/\"}" > comment.json
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.REPO_A_PAT }}" \
-            -H "Content-Type: application/json" \
-            "${{ github.event.pull_request.comments_url }}" \
-            -d @comment.json
+          
+          if [ -n "${{ github.event.pull_request.comments_url }}" ]; then
+            echo "{\"body\":\"### ${SYMBOL} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/regression/${RUN_ID}/\"}" > comment.json
+            curl -X POST \
+              -H "Authorization: token ${{ secrets.REPO_A_PAT }}" \
+              -H "Content-Type: application/json" \
+              "${{ github.event.pull_request.comments_url }}" \
+              -d @comment.json
+          fi
