@@ -33,12 +33,11 @@ jobs:
           repo: playwrightDemoProject
           github_token: ${{ secrets.REPO_A_PAT }}
           workflow_file_name: playwright-test-run.yml
-          ref: ${{ github.event.pull_request.base.ref || 'main' }}
+          ref: main
           client_payload: >-
             {"test_scope":"regression"}
           wait_interval: 15
           propagate_failure: true
-          comment_downstream_url: ${{ github.event.pull_request.comments_url }}
 
       - name: Publish report link to action summary
         id: report_summary
