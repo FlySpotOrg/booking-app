@@ -12,7 +12,10 @@ jobs:
     steps:
       - name: Pause for 30 seconds if another run is in progress
         if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.REPO_A_PAT }}
         run: |
+          gh auth status
           RUNNING_WORKFLOWS=$(gh api repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.status=="in_progress" and .name=="${{ github.workflow }}") | .id')
           if [ -n "$RUNNING_WORKFLOWS" ]; then
             echo "Another run is in progress. Waiting 30 seconds..."
