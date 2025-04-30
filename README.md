@@ -1,3 +1,3 @@
 # booking-app
 
-New functionality added 2
+New functionality added 3
