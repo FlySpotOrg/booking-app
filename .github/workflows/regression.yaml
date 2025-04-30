@@ -44,7 +44,6 @@ jobs:
         run: |
           RUN_ID=${{ steps.dispatch_and_wait.outputs.workflow_id }}
           CONCLUSION=${{ steps.dispatch_and_wait.outputs.conclusion }}
-          
           if [ "$CONCLUSION" = "success" ]; then
             SYMBOL="✅"
           else
@@ -60,3 +59,20 @@ jobs:
               "${{ github.event.pull_request.comments_url }}" \
               -d @comment.json
           fi
+
+          SLACK_MESSAGE="{
+            \"blocks\": [
+              {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*Regression Test Results*\n${SYMBOL} *Status:* ${CONCLUSION}\n*Branch:* ${{ github.ref_name }}\n*Report:* ${REPORT_URL}\"
+                }
+              }
+            ]
+          }"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+            -d "$SLACK_MESSAGE" \
+            "https://slack.com/api/chat.postMessage?channel=${{ secrets.SLACK_CHANNEL_ID }}"
