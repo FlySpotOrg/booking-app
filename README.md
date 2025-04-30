@@ -1,3 +1,3 @@
 # booking-app
 
-test WF5
+New functionality added
