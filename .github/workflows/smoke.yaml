@@ -76,5 +76,5 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
-            -d "$SLACK_MESSAGE" \
+            --data "$SLACK_MESSAGE" \
             "https://slack.com/api/chat.postMessage"
