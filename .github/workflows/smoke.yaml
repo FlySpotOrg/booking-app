@@ -39,6 +39,7 @@ jobs:
           propagate_failure: true
 
       - name: Publish report link to action summary and commit
+        if: ${{ always() }}
         id: report_summary
         run: |
           RUN_ID=${{ steps.dispatch_and_wait.outputs.workflow_id }}
