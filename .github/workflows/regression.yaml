@@ -57,7 +57,7 @@ jobs:
       - name: Publish report link to PR
         if: github.event.pull_request.comments_url
         run: |
-          echo "{\"body\":\"### ${{ steps.report_summary.outputs.symbol }} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${{ steps.report_summary.outputs.run_id }}/\"}" > comment.json
+          echo "{\"body\":\"### ${{ steps.report_summary.outputs.symbol }} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/regression/${{ steps.report_summary.outputs.run_id }}/\"}" > comment.json
           curl -X POST \
             -H "Authorization: token ${{ secrets.REPO_A_PAT }}" \
             -H "Content-Type: application/json" \
