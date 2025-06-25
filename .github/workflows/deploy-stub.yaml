@@ -9,19 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Trigger Playwright Test Runner
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.REPO_A_PAT }}" \
-            https://api.github.com/repos/adnear/test-automation/dispatches \
-            -d '{
-              "event_type": "trigger-playwright-tests",
-              "client_payload": {
-                "application": "neevadmin",
-                "test_scope": "regression",
-                "test_type": "ALL",
-                "env": "uat",
-                "run_branch": "main"
-              }
-            }'
+      - name: Dispatch & wait for Playwright regression suite
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
+        with:
+          owner: adnear
+          repo: test-automation
+          github_token: ${{ secrets.REPO_A_PAT }}
+          workflow_file_name: playwright-test-run.yml
+          ref: main
+          client_payload: >-
+            {
+              "application": "neevadmin",
+              "test_scope": "smoke",
+              "test_type": "ALL",
+              "env": "uat",
+              "run_branch": "main",
+              "trigger_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+          wait_interval: 15
+          propagate_failure: true
