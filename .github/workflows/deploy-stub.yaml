@@ -28,3 +28,5 @@ jobs:
             "browser": "chrome",
             "trigger_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }}'
+      - name: Add link to summary
+        run: echo "See the test report on [Playwright Actions page](https://github.com/flyspotorg/playwrightDemoProject/actions?query=event%3Arepository_dispatch)" >> $GITHUB_STEP_SUMMARY
