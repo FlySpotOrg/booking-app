@@ -17,6 +17,7 @@ jobs:
           github_token: ${{ secrets.REPO_A_PAT }}
           workflow_file_name: playwright-test-run.yml
           ref: main
+          event_type: trigger-playwright-tests
           client_payload: >-
             {
               "application": "neevadmin",
