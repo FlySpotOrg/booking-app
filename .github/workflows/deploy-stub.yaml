@@ -1,0 +1,27 @@
+name:  neevadmin-uat
+on:
+  push:
+    branches:
+      - uat
+
+jobs:
+  deploy-neevadmin-uat:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Trigger Playwright Test Runner
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.REPO_A_PAT }}" \
+            https://api.github.com/repos/adnear/test-automation/dispatches \
+            -d '{
+              "event_type": "trigger-playwright-tests",
+              "client_payload": {
+                "application": "neevadmin",
+                "test_scope": "regression",
+                "test_type": "ALL",
+                "env": "uat",
+                "run_branch": "main"
+              }
+            }'
