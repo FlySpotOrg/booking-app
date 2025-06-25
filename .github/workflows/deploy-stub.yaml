@@ -12,8 +12,8 @@ jobs:
       - name: Dispatch & wait for Playwright regression suite
         uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
-          owner: adnear
-          repo: test-automation
+          owner: ${{github.owner}}
+          repo: playwrightDemoProject
           github_token: ${{ secrets.REPO_A_PAT }}
           workflow_file_name: playwright-test-run.yml
           ref: main
