@@ -8,25 +8,22 @@ jobs:
   deploy-neevadmin-uat:
     runs-on: ubuntu-latest
     steps:
-
-      - name: Dispatch & wait for Playwright regression suite
-        uses: convictional/trigger-workflow-and-wait@v1.6.5
-        with:
-          owner: flyspotorg
-          repo: playwrightDemoProject
-          github_token: ${{ secrets.REPO_A_PAT }}
-          workflow_file_name: playwright-test-run.yml
-          ref: main
-          event_type: trigger-playwright-tests
-          repository_dispatch: true
-          client_payload: >-
-            {
-              "application": "neevadmin",
-              "test_scope": "smoke",
-              "test_type": "ALL",
-              "env": "uat",
-              "run_branch": "main",
-              "trigger_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }
-          wait_interval: 15
-          propagate_failure: true
+      - name: Trigger Playwright smoke suite
+        env:
+          REPO: "flyspotorg/playwrightDemoProject"
+          EVENT_TYPE: "trigger-playwright-tests"
+          CUSTOM_PARAM: "your_value"
+          PAT: ${{ secrets.REPO_A_PAT }}
+        run: |
+          curl -X POST \
+          -H "Authorization: token $PAT" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/$REPO/dispatches \
+          -d '{"event_type":"'"$EVENT_TYPE"'","client_payload":{
+            "application": "neevadmin",
+            "test_scope": "smoke",
+            "test_type": "ALL",
+            "env": "uat",
+            "run_branch": "main",
+            "trigger_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }}'
