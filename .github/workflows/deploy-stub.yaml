@@ -25,5 +25,6 @@ jobs:
             "test_type": "ALL",
             "env": "uat",
             "run_branch": "main",
+            "browser": "chrome",
             "trigger_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }}'
