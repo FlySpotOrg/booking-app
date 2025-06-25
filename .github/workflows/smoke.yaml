@@ -1,81 +1,81 @@
-name: Smoke Test Run
+# name: Smoke Test Run
 
-on:
-  push:
-  workflow_dispatch:
+# on:
+#   push:
+#   workflow_dispatch:
 
-jobs:
-  dispatch-and-wait:
-    name: Trigger Smoke test run and get report
-    runs-on: ubuntu-latest
+# jobs:
+#   dispatch-and-wait:
+#     name: Trigger Smoke test run and get report
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Pause for 30 seconds if another run is in progress
-        env:
-          GH_TOKEN: ${{ secrets.REPO_A_PAT }}
-        run: |
-          gh auth status
-          CURRENT_RUN_ID=${{ github.run_id }}
-          RUNNING_WORKFLOWS=$(gh api repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.status=="in_progress" and .name=="${{ github.workflow }}" and .id!='$CURRENT_RUN_ID') | .id')
-          if [ -n "$RUNNING_WORKFLOWS" ]; then
-            echo "Another run is in progress. Waiting 30 seconds..."
-            sleep 30
-          else
-            echo "No other runs in progress. Proceeding..."
-          fi
+#     steps:
+#       - name: Pause for 30 seconds if another run is in progress
+#         env:
+#           GH_TOKEN: ${{ secrets.REPO_A_PAT }}
+#         run: |
+#           gh auth status
+#           CURRENT_RUN_ID=${{ github.run_id }}
+#           RUNNING_WORKFLOWS=$(gh api repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.status=="in_progress" and .name=="${{ github.workflow }}" and .id!='$CURRENT_RUN_ID') | .id')
+#           if [ -n "$RUNNING_WORKFLOWS" ]; then
+#             echo "Another run is in progress. Waiting 30 seconds..."
+#             sleep 30
+#           else
+#             echo "No other runs in progress. Proceeding..."
+#           fi
 
-      - name: Dispatch & wait for smoke suite
-        id: dispatch_and_wait
-        uses: convictional/trigger-workflow-and-wait@v1.6.5
-        with:
-          owner: FlySpotOrg
-          repo: playwrightDemoProject
-          github_token: ${{ secrets.REPO_A_PAT }}
-          workflow_file_name: playwright-test-run.yml
-          ref: main
-          client_payload: >-
-            {"test_scope":"smoke"}
-          wait_interval: 15
-          propagate_failure: true
+#       - name: Dispatch & wait for smoke suite
+#         id: dispatch_and_wait
+#         uses: convictional/trigger-workflow-and-wait@v1.6.5
+#         with:
+#           owner: FlySpotOrg
+#           repo: playwrightDemoProject
+#           github_token: ${{ secrets.REPO_A_PAT }}
+#           workflow_file_name: playwright-test-run.yml
+#           ref: main
+#           client_payload: >-
+#             {"test_scope":"smoke"}
+#           wait_interval: 15
+#           propagate_failure: true
 
-      - name: Publish report link to action summary and commit
-        if: ${{ always() }}
-        id: report_summary
-        run: |
-          RUN_ID=${{ steps.dispatch_and_wait.outputs.workflow_id }}
-          CONCLUSION=${{ steps.dispatch_and_wait.outputs.conclusion }}
+#       - name: Publish report link to action summary and commit
+#         if: ${{ always() }}
+#         id: report_summary
+#         run: |
+#           RUN_ID=${{ steps.dispatch_and_wait.outputs.workflow_id }}
+#           CONCLUSION=${{ steps.dispatch_and_wait.outputs.conclusion }}
           
-          if [ "$CONCLUSION" = "success" ]; then
-            SYMBOL="✅"
-          else
-            SYMBOL="❌"
-          fi
-          echo "### ${SYMBOL} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/" >> $GITHUB_STEP_SUMMARY          
+#           if [ "$CONCLUSION" = "success" ]; then
+#             SYMBOL="✅"
+#           else
+#             SYMBOL="❌"
+#           fi
+#           echo "### ${SYMBOL} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/" >> $GITHUB_STEP_SUMMARY          
           
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "{\"body\":\"### ${SYMBOL} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/\"}" > comment.json
-            curl -X POST \
-              -H "Authorization: token ${{ secrets.REPO_A_PAT }}" \
-              -H "Content-Type: application/json" \
-              "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
-              -d @comment.json
-          fi
+#           if [ "${{ github.event_name }}" = "push" ]; then
+#             echo "{\"body\":\"### ${SYMBOL} Allure Report: https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/\"}" > comment.json
+#             curl -X POST \
+#               -H "Authorization: token ${{ secrets.REPO_A_PAT }}" \
+#               -H "Content-Type: application/json" \
+#               "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+#               -d @comment.json
+#           fi
 
-          # Send to Slack
-          SLACK_MESSAGE="{
-            \"channel\": \"${{ secrets.SLACK_CHANNEL_ID }}\",
-            \"blocks\": [
-              {
-                \"type\": \"section\",
-                \"text\": {
-                  \"type\": \"mrkdwn\",
-                  \"text\": \"*Smoke Test Results*\n${SYMBOL} *Status:* ${CONCLUSION}\n*Branch:* ${{ github.ref_name }}\n*Report:* https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/\" 
-                }
-              }
-            ]
-          }"
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
-            --data "$SLACK_MESSAGE" \
-            "https://slack.com/api/chat.postMessage"
+#           # Send to Slack
+#           SLACK_MESSAGE="{
+#             \"channel\": \"${{ secrets.SLACK_CHANNEL_ID }}\",
+#             \"blocks\": [
+#               {
+#                 \"type\": \"section\",
+#                 \"text\": {
+#                   \"type\": \"mrkdwn\",
+#                   \"text\": \"*Smoke Test Results*\n${SYMBOL} *Status:* ${CONCLUSION}\n*Branch:* ${{ github.ref_name }}\n*Report:* https://flyspotorg.github.io/playwrightDemoProject/smoke/${RUN_ID}/\" 
+#                 }
+#               }
+#             ]
+#           }"
+#           curl -X POST \
+#             -H "Content-Type: application/json" \
+#             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+#             --data "$SLACK_MESSAGE" \
+#             "https://slack.com/api/chat.postMessage"
