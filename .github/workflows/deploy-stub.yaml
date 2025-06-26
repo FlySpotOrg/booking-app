@@ -13,13 +13,13 @@ jobs:
           REPO: "flyspotorg/playwrightDemoProject"
           EVENT_TYPE: "trigger-playwright-tests"
           CUSTOM_PARAM: "your_value"
-          PAT: ${{ secrets.REPO_A_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           curl -X POST \
-          -H "Authorization: token $PAT" \
+          -H "Authorization: token $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/$REPO/dispatches \
-          -d '{"event_type":"'"$EVENT_TYPE"'","client_payload":{
+          -d '{"event_type":"'$EVENT_TYPE'","client_payload":{
             "application": "neevadmin",
             "test_scope": "smoke",
             "test_type": "ALL",
