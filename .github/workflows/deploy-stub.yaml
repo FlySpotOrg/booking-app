@@ -6,17 +6,27 @@ on:
 
 jobs:
   deploy-neevadmin-uat:
-    uses: flyspotorg/playwrightDemoProject/.github/workflows/playwright-test-run.yml@main
-    with:
-      application: "neevadmin"
-      test_scope: "smoke"
-      test_type: "ALL"
-      env: "uat"
-      run_branch: "main"
-      browser: "chrome"
-      trigger_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-    permissions:
-      actions: write
-      contents: write
-      pages: write
-      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Playwright smoke suite
+        env:
+          REPO: "flyspotorg/playwrightDemoProject"
+          EVENT_TYPE: "trigger-playwright-tests"
+          CUSTOM_PARAM: "your_value"
+          PAT: ${{ secrets.REPO_A_PAT }}
+        run: |
+          curl -X POST \
+          -H "Authorization: token $PAT" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/$REPO/dispatches \
+          -d '{"event_type":"'"$EVENT_TYPE"'","client_payload":{
+            "application": "neevadmin",
+            "test_scope": "smoke",
+            "test_type": "ALL",
+            "env": "uat",
+            "run_branch": "main",
+            "browser": "chrome",
+            "trigger_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }}'
+      - name: Add link to summary
+        run: echo "See the test report on [Playwright Actions page](https://github.com/flyspotorg/playwrightDemoProject/actions?query=event%3Arepository_dispatch)" >> $GITHUB_STEP_SUMMARY
